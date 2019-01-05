@@ -29,3 +29,14 @@ INSERT INTO T1 VALUES (6,600),(7,700)
 USE MASTER
 --Zatrzymaj serwer. Wykonaj symulację awarii: usuń plik CW.MDF.
 --Odtwórz bazę danych po awarii.
+
+--backup dziennika uszkodzonej bazy z NO_TRUNCATE
+BACKUP LOG CW TO DISK='C:\tmp\CW_log3.bak' WITH NO_TRUNCATE
+--przywrócenie bazy
+--1 sposob
+GO
+RESTORE DATABASE CW FROM DISK='C:\tmp\CW_pelna.bak' 
+WITH STANDBY='C:\tmp\nowanazwa.bak'
+--2 sposob
+RESTORE DATABASE CW FROM DISK='C:\tmp\CW_pelna.bak' 
+WITH NORECOVERY
