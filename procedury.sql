@@ -79,3 +79,81 @@ EXECUTE uspZ2 'Beverages', @Ile_produktow OUT --lub OUTPUT
 
 SELECT @Ile_produktow
 GO
+
+--Proszę napisać procedurę składowaną, która będzie służyć do dopisywania jednego wiersza do tabeli [Order Details].
+--Cena jednostkowa ma być przepisywana z tabeli Products.
+IF OBJECT_ID('DBO.uspZ3','P') IS NOT NULL
+	DROP PROC DBO.uspZ3
+GO
+CREATE PROC uspZ3 
+	@IdZamowienia INT, 
+	@IdProduktu INT,
+	@Ilosc SMALLINT=1,
+	@Znizka REAL=0
+AS
+DECLARE @IleWMagazynie INT
+DECLARE @Cena MONEY
+
+IF NOT EXISTS (SELECT OrderID FROM Northwind.dbo.Orders WHERE OrderID=@IdZamowienia)
+BEGIN
+	RAISERROR('Nie ma zamówienia o numerze %d', 16,1, @IdZamowienia)
+	RETURN(1)
+END	
+
+IF NOT EXISTS (SELECT ProductID FROM Northwind.dbo.Products WHERE ProductID=@IdProduktu)
+BEGIN
+	RAISERROR('Nie ma produktu o numerze %d', 16,1, @IdProduktu)
+	RETURN(2)
+END	
+
+IF EXISTS (SELECT OrderID FROM Northwind.dbo.[Order Details] 
+		   WHERE OrderID=@IdZamowienia AND ProductID=@IdProduktu)
+BEGIN
+	RAISERROR('Produkt o podanym numerze %d jest juz wpisany do zamowienia %d. Nie można go wpisać drugi raz.'
+	, 16,1, @IdProduktu, @IdZamowienia)
+	RETURN(3)
+END	
+
+SET @IleWMagazynie = (SELECT UnitsInStock FROM Northwind.dbo.Products 
+					  WHERE ProductID=@IdProduktu)
+IF @IleWMagazynie <@Ilosc 
+BEGIN
+	RAISERROR('Nie ma żądanej ilości produktu %d', 16,1, @IdProduktu)
+	RETURN(4)
+END	
+
+UPDATE Northwind.dbo.Products 
+SET UnitsInStock = UnitsInStock - @Ilosc, 
+	UnitsOnOrder = UnitsOnOrder + @Ilosc
+WHERE ProductID = @IdProduktu
+
+
+SET @Cena = (SELECT UnitPrice FROM Northwind.dbo.Products WHERE ProductID=@IdProduktu) 
+
+INSERT INTO Northwind.dbo.[Order Details] 
+VALUES (@IdZamowienia, @IdProduktu, @Cena, @Ilosc, @Znizka)
+
+RETURN(0)
+
+GO
+
+--Działanie procedury można sprawdzić np. na poniższych danych. 
+DECLARE @Kod INT
+EXECUTE @Kod=dbo.uspZ3 45077,145,2,0
+PRINT 'Kod wyjścia = '+ cast(@Kod as varchar(1))
+
+DECLARE @Kod INT
+EXECUTE @Kod=dbo.uspZ3 11077,145,2,0
+PRINT 'Kod wyjścia = '+ cast(@Kod as varchar(1))
+
+DECLARE @Kod INT
+EXECUTE @Kod=dbo.uspZ3 11077,1,2,0
+PRINT 'Kod wyjścia = '+ cast(@Kod as varchar(1))
+
+DECLARE @Kod INT
+EXECUTE @Kod=dbo.uspZ3 11077,5,2,0
+PRINT 'Kod wyjścia = '+ cast(@Kod as varchar(1))
+
+DECLARE @Kod INT
+EXECUTE @Kod=dbo.uspZ3 11077,9,1,0
+PRINT 'Kod wyjścia = '+ cast(@Kod as varchar(1))
