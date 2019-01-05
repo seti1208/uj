@@ -4,49 +4,42 @@ USE master
 EXEC sp_addumpdevice 'disk', 'nw1', 'c:\...\backup\nw1.bak' 
 EXEC sp_addumpdevice 'disk', 'nwlog', 'c:\...\backup\nwlog.bak'
 
-/* Tworzenie kilku logicznych urządzeń kopii zapasowej */
+--Tworzenie kilku logicznych urządzeń kopii zapasowej */
 USE master
 EXEC sp_addumpdevice 'disk', 'nwstripe1', 'c:\...\backup\nwstripe1.bak' 
 EXEC sp_addumpdevice 'disk', 'nwstripe2', 'c:\...\backup\nwstripe2.bak'
 
-Wyświetlenie informacji o zawartości trwałego pliku (urządzenia) kopii zapasowych
+--Wyświetlenie informacji o zawartości trwałego pliku (urządzenia) kopii zapasowych
+RESTORE filelistonly FROM nazwa_urządzenia
 
-restore filelistonly from nazwa_urządzenia
-
-Wykonanie pełnej kopii zapasowej bazy danych na „urządzenie” (do trwałego pliku kopii zapasowych)
-
+--Wykonanie pełnej kopii zapasowej bazy danych na „urządzenie” (do trwałego pliku kopii zapasowych)
 /* Tworzy kopię zapasową bazy danych Northwind na urządzeniu logicznym Nw1 */
-Use Master
+USE master
 BACKUP DATABASE Northwind TO Nw1 
 WITH FORMAT, DESCRIPTION = 'Pierwsza pełna kopia bezpieczeństwa bazy danych Northwind', NAME = 'PełnaNorthwind'
 
-Wykonanie pełnej kopii zapasowej bazy danych do pliku tymczasowego
-
+--Wykonanie pełnej kopii zapasowej bazy danych do pliku tymczasowego
 /* Tworzy kopię zapasową bazy danych Northwind w pliku tymczasowym Nw1.bak */
-Use Master
+USE master
 BACKUP DATABASE Northwind TO Disk=’E:\Kopie\Nw1.bak’
 WITH FORMAT, DESCRIPTION = 'Pierwsza pełna kopia bezpieczeństwa bazy danych Northwind', NAME = 'PełnaNorthwind'
 
-Wyświetlenie informacji o zawartości pliku tymczasowego kopii zapasowych
+--Wyświetlenie informacji o zawartości pliku tymczasowego kopii zapasowych
+RESTORE filelistonly FROM disk = 'C:\tmp\backup.bak'
 
-restore filelistonly from disk = ścieżka_dostępu_do_pliku
-
-
-Dodanie kolejnej pełnej kopii zapasowej bazy danych do urządzenia
-
+--Dodanie kolejnej pełnej kopii zapasowej bazy danych do urządzenia
 /*Dodaje nową kopię do urządzenia NW1*/
 BACKUP DATABASE Northwind to Nw1
-with NOINIT , DESCRIPTION = 'Druga pełna kopia Northwind'
+with NOINIT, DESCRIPTION = 'Druga pełna kopia Northwind'
 
 Nadpisanie urządzenia nową pełną kopią zapasową
 
 /* Zastępuje istniejący plik kopii zapasowej nową kopią zapasową. */
 BACKUP DATABASE Northwind to Nw1
-WITH INIT ,
+WITH INIT,
 DESCRIPTION = 'Trzecia kopia zapasowa bazy danych Northwind zapisująca wszystkie poprzednie'
 
-Tworzenie równoległej kopii zapasowej na wielu urządzeniach
-
+--Tworzenie równoległej kopii zapasowej na wielu urządzeniach
 /* Tworzenie kopii zapasowej na wielu urządzeniach, każde zawiera tylko część bazy. Jeśli urządzenia są na różnych fizycznych dyskach, to przyśpieszamy operację tworzenia i potem odczytu bazy */
 
 BACKUP DATABASE Northwind TO Nwstripe1, Nwstripe2
@@ -55,44 +48,29 @@ DESCRIPTION = 'Równoległa kopia bezpieczeństwa bazy danych Northwind',
 NAME = 'stripeNW'
 
 
-Odtwarzanie bazy danych z pełnej kopii zapasowej
-
+--Odtwarzanie bazy danych z pełnej kopii zapasowej
 ---Odtwarzanie bazy danych, zastępowanie istniejącej kopii i odzyskanie.
 RESTORE DATABASE NWCOPY FROM NWC2
 WITH REPLACE, RECOVERY
 
-Odtwarzanie bazy danych z drugiej kopii na urządzeniu
-
----Odtwarzanie bazy danych z drugiej kopii na urządzeniu, zastępowanie 
----istniejącej kopii i odzyskanie.
+--Odtwarzanie bazy danych z drugiej kopii na urządzeniu
+---Odtwarzanie bazy danych z drugiej kopii na urządzeniu, zastępowanie istniejącej kopii i odzyskanie.
 RESTORE DATABASE NWCOPY FROM NWC2
 WITH FILE=2, REPLACE, RECOVERY
 
-Tworzenie kopii zapasowej dziennika transakcji
-
-/* Tworzenie kopii zapasowej dziennika transakcji */
-
+--Tworzenie kopii zapasowej dziennika transakcji
 BACKUP LOG Northwind TO MwLog
 DESCRIPTION = 'Kopia dziennika transakcji bazy Northwind'
 
-Tworzenie kopii zapasowej dziennika transakcji bez obcinania dziennika
-
-/* Tworzenie kopii zapasowej dziennika transakcji bez obcinania dziennika
-   tzn. bez usuwania nieaktywnych wpisów. */
-
+--Tworzenie kopii zapasowej dziennika transakcji bez obcinania dziennika (NO_TRUNCATE)
+   --tzn. bez usuwania nieaktywnych wpisów. */
 BACKUP LOG Northwind TO MwLog WITH NO_TRUNCATE
 
-
-Obcięcie dziennika transakcji bez wykonania kopii zapasowej
-
-Uwaga – ta opcja nie działa począwszy od SQL Serwera 2008. 
-
-/* Obcięcie dziennika transakcji bez wykonania kopii zapasowej*/
-
+--Obcięcie dziennika transakcji bez wykonania kopii zapasowej
+--Uwaga – ta opcja nie działa począwszy od SQL Serwera 2008. 
 BACKUP LOG Northwind TO MwLog WITH TRUNCATE_ONLY
 
-Przykład ilustrujący odtworzenie bazy do znacznika (MARK) ustawionego w transakcji
-
+--Przykład ilustrujący odtworzenie bazy do znacznika (MARK) ustawionego w transakcji
 BEGIN TRANSACTION RoyaltyUpdate 
    WITH MARK 'Update royalty values'
 GO
@@ -119,8 +97,7 @@ RESTORE LOG pubs
    WITH FILE = 4,
    STOPATMARK = 'RoyaltyUpdate'
 
-Przykład ilustrujący odtworzenie bazy do pewnej chwili
-
+---Przykład ilustrujący odtworzenie bazy do pewnej chwili
 RESTORE DATABASE MyNwind
    FROM MyNwind_1, MyNwind_2
    WITH NORECOVERY
