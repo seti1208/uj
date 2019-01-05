@@ -1,10 +1,8 @@
 /* Napisać wyzwalacz, który pozwoli na dopisanie do
---tabeli SF (Szczegóły faktur) tylko 
---poprawnych numerów towaru lub usługi.
---Numery towarów są w tabeli Towary, numery
---usług są w tabeli Usługi, wiięc nie da się
---utworzyć więzów klucza obcego w tabeli SF
-(bo klucz obcy może się odwoływać tylko do jednej tabeli.
+tabeli SF (Szczegóły faktur) tylko poprawnych numerów towaru lub usługi.
+Numery towarów są w tabeli Towary, numery
+usług są w tabeli Usługi, wiięc nie da się utworzyć więzów klucza obcego w tabeli SF
+(bo klucz obcy może się odwoływać tylko do jednej tabeli. */
 CREATE TABLE Uslugi(
 NrUslugi INT PRIMARY KEY CHECK(NrUslugi >100),
 Nazwa NVARCHAR(100) NOT NULL,
