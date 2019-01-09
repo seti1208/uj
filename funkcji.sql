@@ -1,3 +1,29 @@
+--Tego typu funkcje są mocniejszą alternatywą dla widoków. Widok może zawierać tylko zdanie SELECT, ponadto nie może być parametryzowany. Funkcje zwracające zestaw wierszy mogą mieć rozbudowaną logikę.
+--Przykład (Books Online):
+CREATE FUNCTION LargeOrderShippers ( @FreightParm money )
+RETURNS @OrderShipperTab TABLE
+   (
+    ShipperID     int,
+    ShipperName   nvarchar(80),
+    OrderID       int,
+    ShippedDate   datetime,
+    Freight       money
+   )
+AS
+BEGIN
+   INSERT INTO @OrderShipperTab
+        SELECT S.ShipperID, S.CompanyName,
+               O.OrderID, O.ShippedDate, O.Freight
+        FROM Shippers AS S INNER JOIN Orders AS O
+              ON S.ShipperID = O.ShipVia
+        WHERE O.Freight > @FreightParm
+   RETURN
+END
+Wywołanie funkcji:
+
+SELECT *
+FROM dbo.LargeOrderShippers( $500 )
+
 --Proszę napisać funkcję skalarną, która dla podanej jako argument daty poda dzień tygodnia. 
 --Wskazówka – należy wykorzystać funkcję DatePart().
 
