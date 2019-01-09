@@ -19,13 +19,39 @@ BEGIN
         WHERE O.Freight > @FreightParm
    RETURN
 END
-Wywołanie funkcji:
+--Wywołanie funkcji:
+SELECT * FROM dbo.LargeOrderShippers( $500 )
 
+
+--Funkcje zwracające zestawy wierszy (inline)
+--Tego typu funkcje mają funkcjonalność widoków sparametryzowanych.
+Rozważmy następujący widok (przykład z Books Online):
+
+CREATE VIEW vw_CustomerNamesInWA AS
+SELECT CustomerID, CompanyName
+FROM Northwind.dbo.Customers
+WHERE Region = 'WA'
+
+--Taki widok wybiera dane tylko z regionu WA. Gdybyśmy chcieli użyć parametru zamiast stałej ‘WA’, 
+--musimy utworzyć funkcję typu inline. 
+
+CREATE FUNCTION fn_CustomerNamesInRegion
+                 ( @RegionParameter nvarchar(30) )
+RETURNS table
+AS
+RETURN (
+        SELECT CustomerID, CompanyName
+        FROM Northwind.dbo.Customers
+        WHERE Region = @RegionParameter
+       )
+GO
+-- Example of calling the function for a specific region
 SELECT *
-FROM dbo.LargeOrderShippers( $500 )
+FROM fn_CustomerNamesInRegion(N'WA')
+GO
+--Klauzula RETURNS zawiera tylko słowo TABLE, natomiast po RETURN należy w nawiasach umieścić zdanie SELECT, 
+--wykorzystujące parametr bądź parametry funkcji.
 
---Proszę napisać funkcję skalarną, która dla podanej jako argument daty poda dzień tygodnia. 
---Wskazówka – należy wykorzystać funkcję DatePart().
 
 IF OBJECT_ID('DBO.UFNZ9','FN') IS NOT NULL
 	DROP FUNCTION DBO.UFNZ9
